@@ -4,7 +4,7 @@ import gc
 import pyb
 
 
-class WS2812:
+class Neopixel:
     """
     Driver for WS2812 RGB LEDs. May be used for controlling single LED or chain
     of LEDs.
@@ -18,7 +18,7 @@ class WS2812:
             (0, 0, 255),    # blue
             (85, 85, 85),   # white
         ]
-        chain.show(data)
+        chain.update_leds(data)
     """
     buf_bytes = (0x11, 0x13, 0x31, 0x33)
 
@@ -40,25 +40,25 @@ class WS2812:
         self.spi = pyb.SPI(spi_bus, pyb.SPI.MASTER, baudrate=3200000, polarity=0, phase=1)
 
         # turn LEDs off
-        self.show([])
+        self.update_leds([])
 
-    def show(self, data):
+    def update_leds(self, data):
         """
-        Show RGB data on LEDs. Expected data = [(R, G, B), ...] where R, G and B
+        update_leds RGB data on LEDs. Expected data = [(R, G, B), ...] where R, G and B
         are intensities of colors in range from 0 to 255. One RGB tuple for each
         LED. Count of tuples may be less than count of connected LEDs.
         """
-        self.fill_buf(data)
-        self.send_buf()
+        self._fill_buf(data)
+        self._send_buf()
 
-    def send_buf(self):
+    def _send_buf(self):
         """
         Send buffer over SPI.
         """
         self.spi.send(self.buf)
         gc.collect()
 
-    def update_buf(self, data, start=0):
+    def _update_buf(self, data, start=0):
         """
         Fill a part of the buffer with RGB data.
 
@@ -102,13 +102,13 @@ class WS2812:
 
         return index // 12
 
-    def fill_buf(self, data):
+    def _fill_buf(self, data):
         """
         Fill buffer with RGB data.
 
         All LEDs after the data are turned off.
         """
-        end = self.update_buf(data)
+        end = self._update_buf(data)
 
         # turn off the rest of the LEDs
         buf = self.buf
